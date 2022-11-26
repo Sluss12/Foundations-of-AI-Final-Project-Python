@@ -8,14 +8,6 @@
 """
 import numpy as np
 class block:
-    def __init__(self):
-        self.label = ""
-        self.location = -1
-        self.position = -1
-    def __init__(self, name, position):
-        self.label = name
-        self.location = 0
-        self.position = position
     def __init__(self, name, location, position):
         self.label = name
         self.location = location
@@ -37,57 +29,128 @@ class block:
     def table(self):
         print("return true if block self is on the table (pos 0 in stack)")
 
+    def __str__(self) -> str:
+        if self.position != -1:
+            return f'Block {self.label} is in L{self.location} at position {self.position}.'
+        else:
+            if self.label != '':
+                return f'Block {self.label} is held by the arm at L{self.location}.'
+            else:
+                f'No block is currently held by the arm. It is over location L{self.location}.'
+    def __repr__(self) -> str:
+        return self.label
 class state:
-    def __init__(self):
-        L1 = []
-        L2 = []
-        L3 = []
+    def __init__(self, L1, L2, L3, arm):
         self.locations = [L1, L2, L3]
-    def __init__(self, L1, L2, L3):
-        L1 = []
-        L2 = []
-        L3 = []
-        self.locations = [L1, L2, L3]
+        self.arm = arm
+
+    def __str__(self) -> str:
+        tallestStack = self.findTallestStack()
+        bar = ' | '
+        emptySpace = '_'
+        newLine = '\n'
+        lineBuilder = ""
+        lineBuilder += newLine
+        remainingLineCounter = np.size(self.locations[tallestStack])
+        # check arm
+        if self.arm.label != '':
+            lineBuilder += f'Block {self.arm.label} is held by the arm at L{self.arm.location}.'
+        else:
+            lineBuilder += f'No block is currently held by the arm. It is over location L{self.arm.location}.\n'
+        # check block stacks
+        while(remainingLineCounter > 0): # loop to print each line
+            remainingLineCounter -= 1
+            listCounter = 0
+            lineBuilder += bar
+            while(listCounter <= 2): # loop through each list
+                if remainingLineCounter < np.size(self.locations[listCounter]): # if the lineCounter is less than the number of elements at this location there is a block to print
+                    blockLabel = self.locations[listCounter][remainingLineCounter].label
+                    lineBuilder += blockLabel
+                else: # if the lineCounter is greater than the number of elements at this location print a blank space 
+                    lineBuilder += emptySpace
+                lineBuilder += bar
+                listCounter += 1
+            lineBuilder += newLine
+        return lineBuilder
+
+    def __repr__(self) -> str:
+        tallestStack = self.findTallestStack()
+        bar = ' | '
+        emptySpace = '_'
+        newLine = '\n'
+        lineBuilder = ""
+        lineBuilder += newLine
+        remainingLineCounter = np.size(self.locations[tallestStack])
+        # check arm
+        if self.arm.label != '':
+            lineBuilder += f'Block {self.arm.label} is held by the arm at L{self.arm.location}.'
+        else:
+            lineBuilder += f'No block is currently held by the arm. It is over location L{self.arm.location}.'
+        # check block stacks
+        lineBuilder += newLine
+        while(remainingLineCounter > 0): # loop to print each line
+            remainingLineCounter -= 1
+            listCounter = 0
+            lineBuilder += bar
+            while(listCounter <= 2): # loop through each list
+                if remainingLineCounter < np.size(self.locations[listCounter]): # if the lineCounter is less than the number of elements at this location there is a block to print
+                    blockLabel = self.locations[listCounter][remainingLineCounter].label
+                    lineBuilder += blockLabel
+                else: # if the lineCounter is greater than the number of elements at this location print a blank space 
+                    lineBuilder += emptySpace
+                lineBuilder += bar
+                listCounter += 1
+            lineBuilder += newLine
+        return lineBuilder
+
+    def findTallestStack(self):
+        size_L1 = np.size(self.locations[0])
+        size_L2 = np.size(self.locations[1])
+        size_L3 = np.size(self.locations[2])
+        tallestStack = -1
+        if size_L1 > size_L2:
+            if size_L1 > size_L3:
+                tallestStack = 0
+            elif size_L3 > size_L1: 
+                tallestStack = 2
+        if size_L2 > size_L1:
+            if size_L2 > size_L3:
+                tallestStack = 1
+            elif size_L3 > size_L2:
+                tallestStack = 2
+        return tallestStack
 
     # State Actions
     def build(self, L1, L2, L3):
         self.locations[0] = L1
         self.locations[1] = L2
-        self.locations[3] = L3
+        self.locations[2] = L3
 
     def print(self):
-        size_L1 = np.size(self.locations[0])
-        size_L2 = np.size(self.locations[1])
-        size_L3 = np.size(self.locations[2])
-        biggestStack = -1
-        if size_L1 > size_L2:
-            if size_L1 > size_L3:
-                biggestStack = 0
-            elif size_L3 > size_L1: 
-                biggestStack = 2
-        if size_L2 > size_L1:
-            if size_L2 > size_L3:
-                biggestStack = 1
-            elif size_L3 > size_L2:
-                biggestStack = 2
-        lineBuilder = ""
+        tallestStack = self.findTallestStack()
+        print(f'The tallest stack of bricks is stack {tallestStack}, this stack is {np.size(self.locations[tallestStack])} bricks tall.')
+        print(f'Stack 1: {np.size(self.locations[0])}\nStack 2: {np.size(self.locations[1])}\nStack 3: {np.size(self.locations[2])}')
         bar = " | "
-        lineCounter = np.size(self.locations[biggestStack])
-        listCounter = 0
-        for line in range(lineCounter): # loop to print each line
-            while(listCounter < 2): # loop through each list
-                if lineCounter < self.locations[listCounter].count(): # if the lineCounter is less than the number of elements at this location there is a block to print
-                    blockLabel = self.locations[listCounter][line].label
-                    print(blockLabel)
+        emptySpace = '_'
+        remainingLineCounter = np.size(self.locations[tallestStack])
+        while(remainingLineCounter > 0): # loop to print each line
+            remainingLineCounter -= 1
+            listCounter = 0
+            lineBuilder = ""
+            lineBuilder += bar
+            #print(f'Remaining Line Count = {lineCounter}')
+            while(listCounter <= 2): # loop through each list
+                if remainingLineCounter < np.size(self.locations[listCounter]): # if the lineCounter is less than the number of elements at this location there is a block to print
                     # print the letter
-                    lineBuilder += bar
-                else: # if the lineCounter is greater than the number of elements at this location
-                        # print a blank space 
-                    pass
-                
+                    #print(f'This space is block {blockLabel}')
+                    blockLabel = self.locations[listCounter][remainingLineCounter].label
+                    lineBuilder += blockLabel
+                else: # if the lineCounter is greater than the number of elements at this location print a blank space 
+                    #print("This space is blank")
+                    lineBuilder += emptySpace
+                lineBuilder += bar
                 listCounter += 1
-            print
-            # end for
+            print(f'{lineBuilder}')
 
     # Block Actions
     def pickUp(self, block, location):
@@ -110,14 +173,12 @@ class state:
 
 
 def buildLocation(Li, blocks):
-    location = []
     location = Li
     for b in blocks:
         location.insert(b.position, b)
-    
     return location
 
-def buildDefaultState():
+def buildDefaultState() -> state:
     a = block("a",0,0)
     b = block("b",0,1)
     c = block("c",0,2)
@@ -131,12 +192,25 @@ def buildDefaultState():
     k = block("k",0,10)
     m = block("m",0,11)
     n = block("n",0,12)
+    print("Blocks made")
     blocks = [a, b, c, d, e, f, g, h, i, j, k, m, n]
-    L1 = []
+    arm = block('', 0, -1)
+    L1 = buildLocation([], blocks)
     L2 = []
     L3 = []
-    L1 = buildLocation(L1, blocks)
-    s1 = state(L1, L2, L3)
-    s1.print()
+    print("Locations Built")
+    s1 = state(L1, L2, L3, arm)
+    return s1
 
-buildDefaultState()
+def testDefaultState(s):
+    arm = block('l', 0, -1)
+    s2 = state(s.locations[0], s.locations[1], s.locations[2], arm)
+    t = [state, s2]
+    print("state")
+    s.print()
+    print("end stae print()")
+    print(f'state test print:{s}')
+    print(f'representation test print:{t}')
+
+s1 = buildDefaultState()
+testDefaultState(s1)
