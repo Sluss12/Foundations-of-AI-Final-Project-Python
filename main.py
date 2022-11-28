@@ -94,20 +94,19 @@ class block(object):
             print(f'block {self.label} (pos: L{self.location+1},{self.position}) is not in this stack')
             printLocation(location)
             return False
-        if location[self.position+1]:
-            print(f'block found at self.positin+1: {location[self.position+1]}')
+        if self.position+1 >= np.size(location):
+            print(f'block found at self.positin+1: {location[self.position]}')
             return False
         else:
             print(f'no block found at self.position+1')
             return True
 
     def table(self)-> bool:
-        print("return true if block self is on the table (pos 0 in stack)")
         if self.position != 0:
-            print(f'block {self.label} is not on the table (pos: L{self.location},{self.position})')
+            #print(f'block {self.label} is not on the table (pos: L{self.location},{self.position})')
             return False
         else:
-            print(f'block {self.label} is on the table at loc: L{self.location}')
+            #print(f'block {self.label} is on the table at loc: L{self.location}')
             return True
 
 class state(object):
@@ -526,11 +525,31 @@ def testBlockRelationships():
         print(f'blockB is on blockA')
     else:
         print(f'blockB is not on blockA')
+    if blockA.on(blockA):
+            print(f'blockA is on blockA')
+    else:
+        print(f'blockA is not on blockA')
     # clear tests
     print('CLEAR:')
-    
+    if blockA.clear(testState.locations[blockA.location]):
+        print(f'blockA is clear')
+    else:
+        print(f'blockA is not clear')
+    if blockB.clear(testState.locations[blockA.location]):
+        print(f'blockB is clear')
+    else:
+        print(f'blockB is not clear')
     # table tests
     print('TABLE:')
+    if blockA.table():
+        print(f'blockA is on table')
+    else:
+        print(f'blockA is not on table')
+    if blockB.table():
+        print(f'blockB is on table')
+    else:
+        print(f'blockB is not on table')
+    print(f'STATE:{testState}')
     print('END OF testBlockRelationships()\n\n\n')
 
 # Main
