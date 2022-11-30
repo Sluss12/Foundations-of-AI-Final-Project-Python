@@ -13,19 +13,19 @@ import numpy as np
 # Classes
 class block(object):
     # Class Functions
-    def __init__(self, name: Optional[str] = '', location: Optional[int] = 0, position: Optional[int] = -1):
+    def __init__(self, name: Optional[str] = None, location: Optional[int] = 0, position: Optional[int] = -1):
         self.label = name
         self.location = location
         self.position = position
 
     def __str__(self) -> str:
         if self.position != -1:
-            return f'Block {self.label} is in L{self.location+1} at position {self.position}.'
+            return f'Block {self.label} is in L{self.location} at position {self.position}.'
         else:
-            if self.label != '':
-                return f'Block {self.label} is held by the arm at L{self.location+1}.'
+            if self.label is None:
+                return f'No block is currently held by the arm: it is over L{self.location}.'
             else:
-                return f'No block is currently held by the arm: it is over L{self.location+1}.'
+                return f'Block {self.label} is held by the arm at L{self.location}.'
 
     def __repr__(self) -> str:
         return self.label
@@ -53,6 +53,8 @@ class block(object):
                 if self.position > block.position:
                     return True
                 else:
+                    if self.position == -1:
+                        return True # arm above location case
                     return False
             else:
                 #print(f'block {self.label} is not in the same stack as block {block.label}')
@@ -89,16 +91,16 @@ class block(object):
             return False
 
     def clear(self, location:list[object])-> bool:
-        #print("returns true if block self has no block on self")
         if self != location[self.position]:
-            print(f'block {self.label} (pos: L{self.location+1},{self.position}) is not in this stack')
-            printLocation(location)
+            #print(f'block {self.label} (pos: L{self.location},{self.position}) is not in this stack')
+            #printLocation(location)
             return False
-        if self.position+1 >= np.size(location):
-            print(f'block found at self.positin+1: {location[self.position]}')
-            return False
-        else:
-            print(f'no block found at self.position+1')
+        try:
+            if location[self.position+1]:
+                #print(f'block found at self.positin+1: {location[self.position+1]}')
+                return False
+        except IndexError:
+            #print(f'no block found at self.position+1')
             return True
 
     def table(self)-> bool:
@@ -116,9 +118,9 @@ class state(object):
         self.locations = [L1, L2, L3]
         self.arm = arm
 
-
     def __str__(self) -> str:
         tallestStack = self.findTallestStack()
+        print(f'Tallest stack: {tallestStack}')
         bar = ' | '
         emptySpace = '_'
         newLine = '\n'
@@ -126,7 +128,6 @@ class state(object):
         lineBuilder += newLine
         remainingLineCounter = np.size(self.locations[tallestStack])
         # check arm
-        lineBuilder += f'{self.arm}' + newLine
         lineBuilder += self.printArm() + newLine
         # check block stacks
         while(remainingLineCounter > 0): # loop to print each line
@@ -173,8 +174,23 @@ class state(object):
                 listCounter += 1
             lineBuilder += newLine
         return lineBuilder
+
+    def __eq__(self, __o: object) -> bool:
+        for x in range(3): # each stack
+            if self.locations[x] != __o.locations[x]:
+                return False
+            if self.arm != __o.arm:
+                return False
+        return True
+
+    def __ne__(self, __o: object) -> bool:
+        for x in range(3): # each stack
+            if (self.locations[x] != __o.locations[x]) or (self.arm != __o.arm):
+                return True
+        return False
+
     def printArm(self) -> str:
-        if self.arm.label == '':
+        if self.arm.label is None:
             label = ' '
         else:
             label = self.arm.label
@@ -184,6 +200,7 @@ class state(object):
             return f' -----|{label}|----- '
         if self.arm.location == 2:
             return f' ---------|{label}|- '
+
     def print(self):
         tallestStack = self.findTallestStack()
         print(f'The tallest stack of bricks is stack {tallestStack}, this stack is {np.size(self.locations[tallestStack])} bricks tall.')
@@ -212,43 +229,35 @@ class state(object):
         print(stackLabels())
 
     def findTallestStack(self):
-        size_L1 = np.size(self.locations[0])
-        size_L2 = np.size(self.locations[1])
-        size_L3 = np.size(self.locations[2])
+        size_L0 = np.size(self.locations[0])
+        size_L1 = np.size(self.locations[1])
+        size_L2 = np.size(self.locations[2])
+        print(f'l0: {size_L0}\nl1: {size_L1}\nl2: {size_L2}\n')
         tallestStack = -1
-        if size_L1 > size_L2:
-            if size_L1 > size_L3:
+        if size_L0 == size_L1 or size_L0 == size_L2:
+            tallestStack = 0
+        if size_L1 == size_L2:
+            tallestStack = 1
+        if size_L0 > size_L1:
+            if size_L0 > size_L2:
                 tallestStack = 0
-            elif size_L3 > size_L1: 
+            elif size_L2 > size_L0: 
                 tallestStack = 2
-        if size_L2 > size_L1:
-            if size_L2 > size_L3:
+        if size_L1 > size_L0:
+            if size_L1 > size_L2:
                 tallestStack = 1
-            elif size_L3 > size_L2:
+            elif size_L2 > size_L1:
                 tallestStack = 2
         return tallestStack
 
     def isArmEmpty(self) -> bool:
-        if self.arm != block('', 0, -1): 
-            if self.arm != block('', 1, -1):
-                if self.arm != block('', 2, -1):
-                    return False
-        return True # arm is empty
-
-    def __eq__(self, __o: object) -> bool:
-        for x in range(3): # each stack
-            if self.locations[x] != __o.locations[x]:
-                return False
-            if self.arm != __o.arm:
-                return False
-        return True
-
-    def __ne__(self, __o: object) -> bool:
-        for x in range(3): # each stack
-            if (self.locations[x] != __o.locations[x]) or (self.arm != __o.arm):
-                return True
-        return False
-
+        if self.arm == block(location=0): 
+            return True
+        if self.arm == block(location=1):
+            return True
+        if self.arm == block(location=2):
+            return True
+        return False # arm is not empty
 
     # State Actions
     def build(self, L1: Optional[list[block]] = None, L2: Optional[list[block]] = None, L3: Optional[list[block]] = None,  arm: Optional[block] = None, State: Optional[object] = None):
@@ -258,7 +267,6 @@ class state(object):
             newState.locations[1] = State.locations[1]
             newState.locations[2] = State.locations[2]
             newState.arm = State.arm
-            return newState
         else:
             if L1 is not None:
                 newState.locations[0] = L1
@@ -276,23 +284,86 @@ class state(object):
                 newState.arm = arm
             else:
                 newState.arm = self.arm
-            return newState
+        return newState
 
     # State Change Actions
-    def pickUp(self, block: block, location: list[block]):
-        pass
+    def pickUp(self, block: block, location: int):
+        if not self.isArmEmpty():
+            print(f'block {block.label} could not be picked up: arm is not empty\n{self.arm}')
+        else:
+            if not self.arm.above(location=location):
+                print(f'block {block.label} could not be picked up: arm not above block')
+            else:
+                if block != self.locations[location][block.position]:
+                    print(f'block {block.label} could not be picked up: block not found at given location L{location}')
+                else:
+                    if not (block.table() and block.clear(self.locations[location])):
+                        print(f'block {block.label} could not be picked up: block is not on table or not clear')
+                    else:
+                        #print(f'block is on the table and clear, block {block.label} can be picked up')
+                        self.arm = self.locations[location].pop()
+                        self.arm.position = -1
 
-    def putDown(self, block: block, location: list[block]):
-        pass
+    def putDown(self, hBlock: block, location: int):
+        if self.arm != hBlock:
+            print(f'cannot putdown, block and arm are not the same')
+        else:
+            if self.isArmEmpty():
+                print(f'cannot putdown, arm is empty')
+            else:
+                if not hBlock.above(location=location):
+                    print(f'cannot putdown, block is not above given location')
+                else:
+                    if np.size(self.locations[location]) != 0:
+                        print(f'cannot putdown onto block')
+                    else:
+                        self.locations[location].insert(np.size(self.locations[location]), block(hBlock.label,location, np.size(self.locations[location])))
+                        self.arm.label = None
+                        #print(f'block putDown')
 
-    def stack(self, block: block, location: list[block]):
-        pass
+    def stack(self, hBlock: block, location: int):
+        if self.arm != hBlock:
+            print(f'cannot stack, block and arm are not the same')
+        else:
+            if self.isArmEmpty():
+                print(f'cannot stack, arm is empty')
+            else:
+                if not hBlock.above(location=location):
+                    print(f'cannot putdown, block is not above given location')
+                else:
+                    if np.size(self.locations[location]) == 0:
+                        print(f'can only stack onto block')
+                    else:
+                        self.locations[location].insert(np.size(self.locations[location]), block(hBlock.label,location, np.size(self.locations[location])))
+                        self.arm.label = None
+                        #print(f'block putDown')
 
-    def unstack(self, block: block, location: list[block]):
-        pass
+    def unstack(self, block: block, location: int):
+        if not self.isArmEmpty():
+            print(f'block {block.label} could not be picked up: arm is not empty\n{self.arm}')
+        else:
+            if not self.arm.above(location=location):
+                print(f'block {block.label} could not be picked up: arm not above block')
+            else:
+                if block != self.locations[location][block.position]:
+                    print(f'block {block.label} could not be picked up: block not found at given location L{location}')
+                else:
+                    if (not block.table()) and block.clear(self.locations[location]):
+                        print(f'block {block.label} could not be picked up: block is on table or not clear')
+                    else:
+                        #print(f'block is on the table and clear, block {block.label} can be picked up')
+                        self.arm = self.locations[location].pop()
+                        self.arm.position = -1
 
-    def move(self, block: block, start_location: list[block], end_location: list[block]):
-        pass
+    def move(self, block: block, start_location: int, end_location: int):
+        if block == self.arm:
+            if block.location != start_location:
+                print(f'ERROR: block {block.label} is held by the arm but is not at start_location L{start_location}. Cannot move block.\n{block}')
+            else:
+                #print(f'Moving block {block.label} to location L{end_location}')
+                self.arm.location=end_location
+        else:
+            print(f'ERROR: block {block.label} is not in the arm. Cannot move block.\n{block}')
 
     def noop(self):
         pass
@@ -313,10 +384,10 @@ def printLocation(location: Optional[list[block]] = None, arm: Optional[block] =
     if arm is not None:
         # check arm
         lineBuilder += f'{arm}' + newLine
-        if arm.label != '':
-            lineBuilder += f'--|{arm.label}|--' + newLine
-        else:
+        if arm.label is None:
             lineBuilder += f'--| |--' + newLine
+        else:
+            lineBuilder += f'--|{arm.label}|--' + newLine
     if location is not None:
         remainingLineCounter = np.size(location)
         if remainingLineCounter == 0:
@@ -338,7 +409,7 @@ def printLocation(location: Optional[list[block]] = None, arm: Optional[block] =
     print(lineBuilder)
 
 def stackLabels() -> str:
-        labels = ' | L1| L2| L3| \n'
+        labels = ' | L0| L1| L2| \n'
         return labels
 
 # Testing
@@ -493,8 +564,9 @@ def testBlockRelationships():
     blockA = block("a", 0, 0)
     blockB = block("b", 0, 1)
     blockC = block("c", 1, 0)
+    blockD = block("d", 1, 1)
     L0 = [blockA, blockB]
-    L1 = [blockC]
+    L1 = [blockC, blockD]
     arm = block('d', 2, -1)
     testState = state(L0, L1, arm=arm)
     # above tests
@@ -503,6 +575,10 @@ def testBlockRelationships():
         print(f'blockA is above blockB')
     else:
         print(f'blockA is not above blockB')
+    if blockD.above(blockA):
+        print(f'blockD is above blockA')
+    else:
+        print(f'blockD is not above blockA')
     if blockB.above(blockA):
         print(f'blockB is above blockA')
     else:
@@ -552,13 +628,162 @@ def testBlockRelationships():
     print(f'STATE:{testState}')
     print('END OF testBlockRelationships()\n\n\n')
 
-# Main
-defaultStateTester = buildDefaultState()
+def testMoveAction():
+    print('testMoveAction():')
+    blockA = block("a", 0, 0)
+    blockB = block("b", 0, 1)
+    blockC = block("c", 1, 0)
+    L0 = [blockA, blockB]
+    L1 = [blockC]
+    arm = block('d', 2, -1)
+    testState = state(L0, L1, arm=arm)
+    print(f'STATE:{testState}')
+    print('Move Test:')
+    testState.move(blockA, 0, 1)
+    testState.move(arm, 0, 1 )
+    testState.move(arm, arm.location, 1)
+    print(f'STATE:{testState}')
+    print('END OF testMoveAction()\n\n\n')
 
-testDefaultState(defaultStateTester)
-testBuildState()
-testPrintLocation()
-testEmptyArm()
-testBlock()
-testStateComparitors()
-testBlockRelationships()
+def testPickUpAction():
+    print('testPickupAction():')
+    blockA = block("a", 0, 0)
+    blockB = block("b", 0, 1)
+    blockC = block("c", 1, 0)
+    L0 = [blockA, blockB]
+    L1 = [blockC]
+    arm = block('d', 2, -1)
+    testState = state(L0, L1, arm=arm)
+    print(f'STATE:{testState}')
+    testState.pickUp(blockA, blockA.location)
+    testState.arm = block(location=1)
+    testState.pickUp(blockA, blockA.location)
+    testState.arm = block(location=0)
+    testState.pickUp(blockA, blockA.location)
+    testState.pickUp(blockB, blockB.location)
+    testState.arm = block(location=1)
+    testState.pickUp(blockC, blockC.location)
+    
+    print('END OF testPickupAction()\n\n\n')
+
+def testPutDownAction():
+    print('testPutDownAction():')
+    blockA = block("a", 0, 0)
+    blockB = block("b", 0, 1)
+    blockC = block("c", 1, 0)
+    L0 = [blockA, blockB]
+    L1 = [blockC]
+    arm = block('d', 2, -1)
+    testState = state(L0, L1, arm=arm)
+    print(f'STATE:{testState}')
+    testState.putDown(arm, arm.location)
+    printLocation(testState.locations[0])
+    print(f'STATE:{testState}')
+    print('END OF testPutDownAction()\n\n\n')
+    testState.move(testState.arm, 2, 1)
+    testState.pickUp(blockC, 1)
+    testState.move(testState.arm, 1, 2)
+    testState.putDown(testState.arm, 2)
+    print(f'STATE:{testState}')
+
+def testStackAction():
+    print('testStackAction():')
+    blockA = block("a", 0, 0)
+    blockB = block("b", 0, 1)
+    blockC = block("c", 1, 0)
+    L0 = [blockA, blockB]
+    L1 = [blockC]
+    arm = block('d', 2, -1)
+    testState = state(L0, L1, [], arm)
+    printLocation(testState.locations[0])
+    printLocation(testState.locations[1])
+    printLocation(testState.locations[2])
+    print(f'STATE:{testState}')
+    testState.move(testState.arm, 2, 1)
+    testState.stack(testState.arm, 1)
+    print(f'STATE:{testState}')
+    
+    print('END OF testStackAction()\n\n\n')
+
+def testUnstackAction():
+    print('testUnstackAction():')
+    blockA = block("a", 0, 0)
+    blockB = block("b", 0, 1)
+    blockC = block("c", 1, 0)
+    L0 = [blockA, blockB]
+    L1 = [blockC]
+    arm = block('d', 2, -1)
+    testState = state(L0, L1, arm=arm)
+    print(f'STATE:{testState}')
+    testState.unstack(blockA, blockA.location)
+    testState.arm = block(location=1)
+    print(f'Cleared arm and moved to L1')
+    testState.unstack(blockA, blockA.location)
+    testState.arm = block(location=0)
+    print(f'Cleared arm and moved to L0')
+    print(f'STATE:{testState}')
+    testState.unstack(blockA, blockA.location)
+    print(f'STATE:{testState}')
+    testState.unstack(blockB, blockB.location)
+    testState.arm = block(location=1)
+    testState.unstack(blockC, blockC.location)
+    print('END OF testUnstackAction()\n\n\n')
+
+def testNoopAction():
+    print('testNOOPAction():')
+    blockA = block("a", 0, 0)
+    blockB = block("b", 0, 1)
+    blockC = block("c", 1, 0)
+    L0 = [blockA, blockB]
+    L1 = [blockC]
+    arm = block('d', 2, -1)
+    testState = state(L0, L1, arm=arm)
+    print(f'STATE:{testState}')
+    
+    print('END OF testNOOPAction()\n\n\n')
+
+# Main
+#defaultStateTester = buildDefaultState()
+#testDefaultState(defaultStateTester)
+#testBuildState()
+#testPrintLocation()
+#testEmptyArm()
+#testBlock()
+#testStateComparitors()
+#testBlockRelationships()
+#testMoveAction()
+#testPickUpAction()
+#testPutDownAction()
+#testStackAction()
+#testUnstackAction()
+#testNoopAction()
+
+def getStartState() -> state:
+    stacks = [],[],[]
+    i = 0
+    correct = 'n'
+    for stack in stacks:
+        while correct != 'y':
+            listBuilder = []
+            blocks = input(f'Starting from the bottom, what blocks are in L{i}? (comma separate labels \'a, b, c\'):\n')
+            blockLabels = blocks.split(", ")
+            pos = 0
+            for label in blockLabels:
+                print(block(label,i,pos))
+                stack.append(block(label,i,pos))
+                pos += 1
+            printLocation(stack)
+            correct = input('Does this stack look correct? (y/n)\n')
+        i += 1
+        correct = 'n'
+    # end for
+    armStatus = input('Is there a block in the arm? (y/n)\n')
+    if armStatus == 'y':
+        armLabel = input('What block is in the arm?\n')
+    armLocation = input('What is the location of the arm? (Pick One: 0, 1, 2)')
+    arm = block(armLabel,armLocation,-1)
+    print(arm)
+    startState = state(stacks[0], stacks[1], stacks[2], arm)
+    print(f'{startState}')
+    
+getStartState()
