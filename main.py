@@ -795,12 +795,12 @@ def getUserState() -> state:
         i = 0
         for stack in stacks:
             blocks = input(f'Starting from the bottom, what blocks are in L{i}? (comma separate labels \'a, b, c\'):\n')
-            blockLabels = blocks.split(", ")
+            blockLabels = blocks.split(",")
             pos = 0
             if blocks != '':
                 for label in blockLabels:
                     #print(block(label,i,pos))
-                    stack.append(block(label,i,pos))
+                    stack.append(block(label.strip(),i,pos))
                     pos += 1
                 printLocation(stack)
             else:
@@ -871,20 +871,20 @@ def do(currentState:state, endState:state):
 
 
 print('Enter Starting State:')
-s1 = state(L1=[block("a", 0, 0), block("b", 0, 1)], L2=[block("c", 1, 0)], arm=block('d', 2, -1))
-#s1 = getUserState()
+# s1 = state(L1=[block("a", 0, 0), block("b", 0, 1)], L2=[block("c", 1, 0)], arm=block('d', 2, -1))
+s1 = getUserState()
 print('\nStart State Accepted.\n\nEnter Ending State:')
-#s2 = getUserState()
-s2 = state(L1=[block("d", 0, 0), block("c", 0, 1)], L2=[block("b", 1, 0)], L3=[block("a", 2, 0)], arm=block(None, 1, -1))
+s2 = getUserState()
+# s2 = state(L1=[block("d", 0, 0), block("c", 0, 1)], L2=[block("b", 1, 0)], L3=[block("a", 2, 0)], arm=block(None, 1, -1))
 print(f'\n\n\n\nStart State:{s1}\nEnd State:{s2}')
-s3 = state(L1=[block("d", 0, 0), block("c", 0, 1),block("a", 2, 0)], L2=[block("b", 1, 0)], L3=[], arm=block(None, 1, -1))
-print(f'Third State:{s3}')
+# s3 = state(L1=[block("d", 0, 0), block("c", 0, 1),block("a", 2, 0)], L2=[block("b", 1, 0)], L3=[], arm=block(None, 1, -1))
+# print(f'Third State:{s3}')
 
 print("Cost 1 to 2:",hDiff(s1, s2))
 print("Cost 2 to 1:",hDiff(s2, s1))
-print("Cost 1 to 3:",hDiff(s1, s3))
-print("Cost 2 to 3:",hDiff(s2, s3))
-print("Cost 3 to 2:",hDiff(s3, s2))
-print("Cost 3 to 3:",hDiff(s3, s3))
+# print("Cost 1 to 3:",hDiff(s1, s3))
+# print("Cost 2 to 3:",hDiff(s2, s3))
+# print("Cost 3 to 2:",hDiff(s3, s2))
+# print("Cost 3 to 3:",hDiff(s3, s3))
 
-run(s1, s2)
+#run(s1, s2)
