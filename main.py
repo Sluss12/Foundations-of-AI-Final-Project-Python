@@ -229,7 +229,7 @@ class state(object):
             print(f'{lineBuilder}')
         print(stackLabels())
 
-    def findTallestStack(self):
+    def findTallestStack(self) -> int:
         size_L0 = np.size(self.locations[0])
         size_L1 = np.size(self.locations[1])
         size_L2 = np.size(self.locations[2])
@@ -250,6 +250,28 @@ class state(object):
             elif size_L2 > size_L1:
                 tallestStack = 2
         return tallestStack
+
+    def findShortestStack(self) -> int:
+        size_L0 = np.size(self.locations[0])
+        size_L1 = np.size(self.locations[1])
+        size_L2 = np.size(self.locations[2])
+        #print(f'l0: {size_L0}\nl1: {size_L1}\nl2: {size_L2}\n')
+        shortestStack = -1
+        if size_L0 == size_L1 or size_L0 == size_L2:
+            shortestStack = 0
+        if size_L1 == size_L2:
+            shortestStack = 1
+        if size_L0 < size_L1:
+            if size_L0 < size_L2:
+                shortestStack = 0
+            elif size_L2 < size_L0: 
+                shortestStack = 2
+        if size_L1 < size_L0:
+            if size_L1 < size_L2:
+                shortestStack = 1
+            elif size_L2 < size_L1:
+                shortestStack = 2
+        return shortestStack
 
     def isArmEmpty(self) -> bool:
         if self.arm == block(location=0): 
@@ -799,7 +821,37 @@ def getUserState() -> state:
 
 def run(start:state, end:state):
     while (start != end):
+        do(start, end)
         pass
+
+def do(currentState:state, endState:state):
+    bufferState = currentState.build(currentState)
+    i = 0
+    shortest = bufferState.findShortestStack()
+    tallest = bufferState.findTallestStack()
+    middle = 0
+    i = 1
+    while i < 3:
+        if middle == shortest or middle == tallest:
+            middle += 1
+        i += 1
+    # end while
+    print(f's:{shortest}m:{middle}t:{tallest}')
+    
+    if np.size(bufferState.locations[shortest]) != 0:
+        pass
+    
+    while i < 3:
+        if bufferState.pickUp(i):
+            print(f'current to end ({i}): {hDiff(currentState, endState)}')
+            print(f'buffer to end ({i}): {hDiff(bufferState, endState)}')
+        elif bufferState.putDown(i):
+            print(f'current to end ({i}): {hDiff(currentState, endState)}')
+            print(f'buffer to end ({i}): {hDiff(bufferState, endState)}')
+        i += 1
+        
+    # end while
+    
 
 # Main
 # defaultStateTester = buildDefaultState()
@@ -834,3 +886,5 @@ print("Cost 1 to 3:",hDiff(s1, s3))
 print("Cost 2 to 3:",hDiff(s2, s3))
 print("Cost 3 to 2:",hDiff(s3, s2))
 print("Cost 3 to 3:",hDiff(s3, s3))
+
+run(s1, s2)
