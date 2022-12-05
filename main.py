@@ -764,7 +764,7 @@ def stackLabels() -> str:
         return labels
 
 def hDiff(start:state, end:state):
-    # Heuristic Difference - this heuristic calculates the number of blocks that are currently not in the correct 'position'.
+    # Heuristic Difference - this heuristic is used to calculate the number of blocks that are currently not in the correct 'position'.
     cost = 0
     location = 0
     while location < 3:
@@ -776,7 +776,13 @@ def hDiff(start:state, end:state):
             try:
                 if start.locations[location][position] != end.locations[location][position]:
                     #print(f'blocks are not equal. start:{start.locations[location][position]} end:{end.locations[location][position]}')
-                    cost += 1
+                    cost += 2
+            except IndexError:
+                cost += 1
+            try:
+                if position != 0 :
+                    if start.locations[location][position-1] != end.locations[location][position-1]:
+                        cost += 1
             except IndexError:
                 cost += 1
             position += 1
@@ -864,9 +870,9 @@ def do(currentState:state, endState:state):
 # testBlockRelationships()
 # testMoveAction()
 # testPickUpAction()
-# testPutDownAction()
-# testStackAction()
-# testUnstackAction()
+testPutDownAction()
+testStackAction()
+testUnstackAction()
 # testNoopAction()
 
 
